@@ -53,6 +53,35 @@ PATE框架面臨兩個限制。首先，由聚合機製得到的每個預測都�
 
 假設今天模型是用來預測癌症，把一筆數據丟到所有教師模型，每個教師模型都會有自己的結果(癌症/健康)，然後把結果進行統計，就是一個結果。為了要保護統計結果，會加上雜訊，讓統計數值長得不一樣，可是結果不變。最後，就是利用這些結果去訓練一個學生模型。學生的input是由眾老師的統計結果所得，學生並不知道老師是怎樣判斷這個結果，當學生模型訓練完成後，前面的教師模型和統計的框架可以整個捨棄，只剩學生模型。
 
+
+### 對機器學習的攻擊方式
+
+1.  Membership attack：
+
+攻擊方式：給定一筆資料，測試它是否在訓練資料中。
+
+已有例子：以上作法如果運用在以病患資料訓練而成的模型，即有可能洩漏訓練資料中個別病患的資訊。在 [Shokri et al（2016）](https://arxiv.org/abs/1610.05820)中，已提出可以做 membership inference attack 的黑箱攻擊手法，並且已在 Google Perdiction API 與 Amazon ML 服務測試成功，對於用這些服務訓練出來的模型各有 94% 與 74% 機會猜到它們的訓練資料中是否存在某一筆資料。且這個作法需要模型回傳機率分布而不是只有預測的標籤。
+
+2. Training data extraction：
+
+攻擊方式：取得整個訓練資料的大致內容，足以得知其統計分佈。在文獻中的模型反制攻擊即屬於此類。
+
+已有例子：[Fredrikson et al（2014）](https://www.biostat.wisc.edu/~page/WarfarinUsenix2014.pdf)較早提出的模型反制攻擊是針對用藥建議系統，用模型與某位病患的人口屬性，可以回推出該病患的遺傳資料（即該模型中的input）。後續的 [Fredrikson et al（2015）](https://dl.acm.org/doi/10.1145/2810103.2813677)則有對臉部辨識系統的例子，用一個姓名（即模型的output）可以回推出這個人的臉部影像。Model inversion這種攻擊手法與 algorithmic fairness 研究所考慮的 redundant encoding 問題類似，但其實用性仍有待研究。
+
+3.  Model extraction：
+
+攻擊方式：在黑箱攻擊情境下，取得 model 內部的參數值。
+
+已有例子：研究發現，模型參數值至少能部份地記下訓練資料，所以能夠取得模型參數除了安全問題，也可能洩漏隱私資訊。目前 [Tramèr et al（2016）](https://www.usenix.org/conference/usenixsecurity16/technical-sessions/presentation/tramer)提出的作法可以用 API 取得模型參數。這個作法需要 API 回傳機率分布而不是只有標籤。
+
+#### 個人見解：
+
+1.  Membership attack：我認為主要還是只能用在資料庫較小的地方，像是一家醫院，一間學校等專一性比較重的地方，在較為有限的資料庫中比較能用已有的資料得知訓練資料中是否有目標資料，之於那種大型的資料庫，像是一整個國家的醫院病患資料，或更甚至整個洲等級的資料統計，個人的資料獨立性將被稀釋的差不多，這類型的資料攻擊也將變得像是海底撈針一樣不可行。
+
+2.  Training data extraction：對於資料的攻擊性，不能像Membership attack一樣針對同筆資料去做比對，而是對局部部分的資料去做逆推，這對於個資問題也只能確認局部的資料，想要獲取完整資料庫還是極其困難。
+
+3.  Model extraction：直接獲取模型的參數，我認為算是最能知道模型資料的方式，畢竟其他方式都只是逆推回去，而不是正面直接地獲取資料，對於想取得完整性資料來說，是最直接也是最完整的。但目前這方法也只能提取出模型的標籤，還不能完整還原訓練資料本身的參數。
+
 ---
 
 ### 參考來源:
@@ -62,3 +91,4 @@ https://kknews.cc/tech/2vp2l8g.html
 https://www.eettaiwan.com/news/article/20190826NT01-holy-grail-of-encryption-could-be-a-game-changer-for-ai
 https://zh.wikipedia.org/wiki/%E5%90%8C%E6%80%81%E5%8A%A0%E5%AF%86
 https://www.xuehua.us/2018/06/19/%E6%84%8F%E6%83%B3%E4%B8%8D%E5%88%B0%E7%9A%84%E7%9B%9F%E5%8F%8B%EF%BC%9A%E6%94%B9%E5%96%84%E9%9A%90%E7%A7%81%E9%97%AE%E9%A2%98%E5%8F%AF%E4%BB%A5%E5%B8%A6%E6%9D%A5%E8%A1%A8%E7%8E%B0%E6%9B%B4%E5%A5%BD/zh-tw/
+https://medium.com/trustableai/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92%E6%BD%9B%E5%9C%A8%E7%9A%84%E9%9A%B1%E7%A7%81%E5%95%8F%E9%A1%8C-9410eb951411
